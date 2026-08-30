@@ -7,7 +7,14 @@ Murmuration combines a responsive desktop interface with a persistent daemon.
 You can close the window without stopping active transfers, inspect what each
 torrent is doing, and return later without losing state.
 
-[Download the latest preview](https://github.com/forgeopslabs/murmuration-releases/releases)
+**Recommended installation:**
+
+```sh
+brew install --cask forgeopslabs/tap/murmuration
+```
+
+[Homebrew cask](https://github.com/forgeopslabs/homebrew-tap/blob/main/Casks/murmuration.rb)
+· [Manual downloads](https://github.com/forgeopslabs/murmuration-releases/releases)
 
 ![Murmuration torrent workspace](docs/images/murmuration-overview.png)
 
@@ -56,8 +63,9 @@ but it does not hide your network identity.
 | Requirement | Details |
 | --- | --- |
 | macOS | macOS 11 Big Sur or later |
-| Apple Silicon | Download the `macos-arm64.zip` asset |
-| Intel | Download the `macos-x86_64.zip` asset |
+| Homebrew | Recommended installation method |
+| Apple Silicon | Supported; Homebrew selects the `arm64` build automatically |
+| Intel | Supported; Homebrew selects the `x86_64` build automatically |
 | Network | Internet access; incoming connections recommended |
 | Storage | Space for the app, state, and selected torrent payloads |
 
@@ -67,7 +75,28 @@ Apple chip uses the `arm64` build. A Mac showing an Intel processor uses the
 
 ## Install and open
 
-### 1. Download and verify
+### Recommended: Homebrew
+
+Install the official cask from the ForgeOps Labs tap:
+
+```sh
+brew install --cask forgeopslabs/tap/murmuration
+```
+
+Homebrew automatically selects the correct Apple Silicon or Intel build,
+verifies its checksum, installs **Murmuration.app**, and exposes `murmur`,
+`murmur-tui`, and `murmurd` in your command path.
+
+Upgrade later with:
+
+```sh
+brew upgrade --cask forgeopslabs/tap/murmuration
+```
+
+If Homebrew is not installed, use the manual method below or follow the
+[official Homebrew installation guide](https://brew.sh/).
+
+### Manual ZIP fallback
 
 1. Open the [Releases](https://github.com/forgeopslabs/murmuration-releases/releases)
    page and select the newest preview.
@@ -85,14 +114,17 @@ shasum -a 256 murmuration-VERSION-macos-arm64.zip
 Use the `macos-x86_64.zip` filename on an Intel Mac. Compare the printed hash
 with the matching line in `SHA256SUMS`. Continue only when they match.
 
-### 2. Install and approve
+Open the verified ZIP, then drag **Murmuration.app** into **Applications**.
 
-1. Open the verified ZIP, then drag **Murmuration.app** into **Applications**.
-2. Open **Applications** and double-click **Murmuration** once. macOS will block
+### First-launch approval
+
+Homebrew and manual installations use the same first-launch process:
+
+1. Open **Applications** and double-click **Murmuration** once. macOS will block
    this first attempt because the preview is not notarized.
-3. Open **System Settings > Privacy & Security**. Scroll to **Security**, find
+2. Open **System Settings > Privacy & Security**. Scroll to **Security**, find
    the Murmuration message, then choose **Open Anyway**.
-4. Authenticate if macOS asks, then confirm **Open**.
+3. Authenticate if macOS asks, then confirm **Open**.
 
 This creates a per-app exception. Future launches do not require repeating the
 Gatekeeper approval unless you install a different build that macOS treats as a
@@ -234,26 +266,35 @@ to reconnect to the existing daemon.
 To stop it gracefully from Terminal:
 
 ```sh
-/Applications/Murmuration.app/Contents/Resources/bin/murmur shutdown
+murmur shutdown
 ```
+
+For a manual ZIP installation, use
+`/Applications/Murmuration.app/Contents/Resources/bin/murmur shutdown`.
 
 After an update, the app may ask to restart an older daemon. Approve the
 restart, or run:
 
 ```sh
-/Applications/Murmuration.app/Contents/Resources/bin/murmur daemon restart
+murmur daemon restart
 ```
+
+For a manual ZIP installation, use the full `murmur` path shown above.
 
 ## Terminal clients
 
-Release ZIPs include a terminal UI and command-line client. Both start the
-bundled daemon on demand when possible.
+Homebrew exposes the bundled terminal UI and command-line clients in your
+command path. Both start the bundled daemon on demand when possible. Manual ZIP
+installations include the same binaries inside the app bundle.
 
 ### Terminal UI
 
 ```sh
-/Applications/Murmuration.app/Contents/Resources/bin/murmur-tui
+murmur-tui
 ```
+
+Manual ZIP path:
+`/Applications/Murmuration.app/Contents/Resources/bin/murmur-tui`.
 
 Use a terminal at least 72 columns by 20 rows. Press `?` inside the TUI for its
 current key guide.
@@ -261,15 +302,16 @@ current key guide.
 ### CLI examples
 
 ```sh
-MURMUR=/Applications/Murmuration.app/Contents/Resources/bin/murmur
-
-"$MURMUR" list
-"$MURMUR" stats
-"$MURMUR" add /path/to/file.torrent
-"$MURMUR" status 1
-"$MURMUR" remove 1
-"$MURMUR" leakcheck
+murmur list
+murmur stats
+murmur add /path/to/file.torrent
+murmur status 1
+murmur remove 1
+murmur leakcheck
 ```
+
+For a manual ZIP installation, replace `murmur` with
+`/Applications/Murmuration.app/Contents/Resources/bin/murmur`.
 
 CLI `remove` keeps downloaded data. Use the GUI when you need the explicit
 keep-data/delete-data choice.
@@ -286,7 +328,8 @@ commands that disable Gatekeeper or strip quarantine metadata.
 1. Choose **Open Logs** from the startup error, or open
    `~/Library/Logs/Murmuration` in Finder.
 2. Check whether another Murmuration version is running.
-3. Run `murmur daemon restart` using the full path above.
+3. Run `murmur daemon restart`. For a manual ZIP installation, use the full
+   app-bundle path above.
 4. Reopen the app.
 
 ### Downloads do not start
@@ -314,12 +357,27 @@ Open `~/Library/Logs/Murmuration` in Finder. The daemon log is
 1. Quit the GUI.
 2. If Murmuration is your default app, choose another BitTorrent app as the
    default for `.torrent` files and `magnet:` links using that app's controls.
-3. Stop the daemon with
-   `/Applications/Murmuration.app/Contents/Resources/bin/murmur shutdown`.
-4. Move **Murmuration.app** from **Applications** to the Trash.
 
-Normal removal leaves support data and downloaded payloads in place. For a full
-reset, review and move only these Murmuration-owned items to the Trash:
+For a Homebrew installation:
+
+```sh
+brew uninstall --cask forgeopslabs/tap/murmuration
+```
+
+Homebrew stops the app and daemon during removal. To also remove Murmuration's
+support data, preferences, and logs, use `--zap` instead:
+
+```sh
+brew uninstall --cask --zap forgeopslabs/tap/murmuration
+```
+
+For a manual ZIP installation, stop the daemon with
+`/Applications/Murmuration.app/Contents/Resources/bin/murmur shutdown`, then
+move **Murmuration.app** from **Applications** to the Trash.
+
+Normal removal leaves support data and downloaded payloads in place. Homebrew
+`--zap` removes the following support items; manual-install users can review and
+move only these Murmuration-owned items to the Trash:
 
 - `~/Library/Application Support/Murmuration`
 - `~/Library/Caches/org.murmuration-bt.murmuration`
