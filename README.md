@@ -1,19 +1,20 @@
 # Murmuration
 
-**A native macOS BitTorrent client built around swarm visibility, durable
-downloads, and explicit network control.**
+**A native macOS and Linux BitTorrent client built around swarm visibility,
+durable downloads, and explicit network control.**
 
 Murmuration combines a responsive desktop interface with a persistent daemon.
 You can close the window without stopping active transfers, inspect what each
 torrent is doing, and return later without losing state.
 
-**Recommended installation:**
+**Recommended macOS installation:**
 
 ```sh
 brew install --cask forgeopslabs/tap/murmuration
 ```
 
 [Homebrew cask](https://github.com/forgeopslabs/homebrew-tap/blob/main/Casks/murmuration.rb)
+· [Linux packages](#install-and-open)
 · [Manual downloads](https://github.com/forgeopslabs/murmuration-releases/releases)
 
 ![Murmuration torrent workspace](docs/images/murmuration-overview.png)
@@ -23,11 +24,16 @@ brew install --cask forgeopslabs/tap/murmuration
 > authenticated or notarized by Apple. First launch therefore requires a
 > one-time approval in **System Settings > Privacy & Security**. Do not disable
 > Gatekeeper or remove quarantine attributes.
+>
+> Linux is a signed ARM64-only preview. Linux x86_64 and GNOME/X11 are parked,
+> and the complete distribution, renderer, and lifecycle matrix is still in
+> progress. Do not treat the preview repository as a stable channel.
 
 ## User guide
 
 - [Requirements](#requirements)
 - [Install and open](#install-and-open)
+- [Linux trust and preview scope](#linux-trust-and-preview-scope)
 - [macOS approvals](#macos-approvals)
 - [First run](#first-run)
 - [Add a download](#add-a-download)
@@ -35,13 +41,14 @@ brew install --cask forgeopslabs/tap/murmuration
 - [Dashboard, settings, and preferences](#dashboard-settings-and-preferences)
 - [Background daemon](#background-daemon)
 - [Terminal clients](#terminal-clients)
+- [Upgrade](#upgrade)
 - [Troubleshooting](#troubleshooting)
 - [Uninstall](#uninstall)
 - [Releases, source, and licensing](#releases-source-and-licensing)
 
 ## What Murmuration provides
 
-- Native desktop GUI for Apple Silicon and Intel Macs.
+- Native desktop GUI for Apple Silicon and Intel Macs, plus Linux ARM64.
 - BitTorrent v1, v2, and hybrid torrent support.
 - `.torrent` files and magnet links, with a native destination-folder picker.
 - Persistent background daemon: transfers continue after the GUI closes.
@@ -66,6 +73,9 @@ but it does not hide your network identity.
 | Homebrew | Recommended installation method |
 | Apple Silicon | Supported; Homebrew selects the `arm64` build automatically |
 | Intel | Supported; Homebrew selects the `x86_64` build automatically |
+| Linux architecture | ARM64 (`aarch64`/`arm64`) preview only |
+| Linux packages | Signed APT for Debian/Ubuntu; signed DNF for Fedora |
+| Linux sessions | GNOME Wayland and Plasma Wayland/X11 verified |
 | Network | Internet access; incoming connections recommended |
 | Storage | Space for the app, state, and selected torrent payloads |
 
@@ -73,9 +83,157 @@ To identify your Mac, choose **Apple menu > About This Mac**. A Mac showing an
 Apple chip uses the `arm64` build. A Mac showing an Intel processor uses the
 `x86_64` build.
 
+On Linux, run `uname -m` and continue only when it prints `aarch64` or
+`arm64`. Package availability does not yet mean that every compatible ARM64
+distribution or graphics stack has completed qualification.
+
+## Linux trust and preview scope
+
+Murmuration's only Linux package origin is
+`https://packages.forgeopslabs.com`. Verify the complete release-key
+fingerprint before installing:
+
+```text
+D4D910B4D597AAB45541F3ED9D80207E60053983
+```
+
+Use repository-scoped trust. Never use `apt-key`, `trusted=yes`,
+`--nogpgcheck`, disabled repository metadata checks, or `curl | sh`. Stop and
+contact `hello@forgeopslabs.com` if the complete fingerprint differs.
+
+Current ARM64 evidence includes signed APT installation and a
+preview.7-to-preview.8 upgrade on Ubuntu 24.04 LTS, plus cold/warm activation
+on GNOME Wayland and Plasma Wayland/X11. Debian 13, Fedora 43/44, hardware
+Vulkan, non-systemd, transfer, uninstall, and other release-matrix coverage is
+still being completed. GNOME/X11 is parked because the available current GNOME
+ARM64 image no longer provides that session.
+
 ## Install and open
 
-### Recommended: Homebrew
+### Linux ARM64: signed APT repository
+
+On Debian or Ubuntu, install the trust tools, download the public key as data,
+and display its complete primary fingerprint:
+
+```sh
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+
+curl --fail --location \
+  --output /tmp/murmuration-linux-release.asc \
+  https://packages.forgeopslabs.com/keys/murmuration-linux-release.asc
+gpg --show-keys --with-colons /tmp/murmuration-linux-release.asc \
+  | awk -F: '$1 == "fpr" { print $10; exit }'
+```
+
+Continue only when the output exactly matches the fingerprint above. Install
+the verified key and generated ARM64 preview source, then install Murmuration:
+
+```sh
+sudo install -d -m 0755 /etc/apt/keyrings
+gpg --dearmor --yes \
+  --output /tmp/murmuration-linux-release.gpg \
+  /tmp/murmuration-linux-release.asc
+sudo install -m 0644 \
+  /tmp/murmuration-linux-release.gpg \
+  /etc/apt/keyrings/murmuration.gpg
+
+curl --fail --location \
+  --output /tmp/murmuration-preview.sources \
+  https://packages.forgeopslabs.com/config/murmuration-preview.sources
+sudo install -m 0644 \
+  /tmp/murmuration-preview.sources \
+  /etc/apt/sources.list.d/murmuration-preview.sources
+
+sudo apt-get update
+sudo apt-get install murmuration
+```
+
+Verify the selected origin, architecture, and shared version:
+
+```sh
+apt-cache policy murmuration
+murmur --version
+murmur-gui --version
+murmur-tui --version
+murmurd --version
+```
+
+### Linux ARM64: signed DNF repository
+
+On Fedora, install `ca-certificates`, `curl`, and `gnupg2`, then download and
+verify the public key. After the full fingerprint matches, install the key and
+repository configuration:
+
+```sh
+sudo dnf install ca-certificates curl gnupg2
+curl --fail --location \
+  --output /tmp/murmuration-linux-release.asc \
+  https://packages.forgeopslabs.com/keys/murmuration-linux-release.asc
+gpg --show-keys --with-colons /tmp/murmuration-linux-release.asc \
+  | awk -F: '$1 == "fpr" { print $10; exit }'
+
+sudo install -D -m 0644 \
+  /tmp/murmuration-linux-release.asc \
+  /etc/pki/rpm-gpg/RPM-GPG-KEY-murmuration
+
+curl --fail --location \
+  --output /tmp/murmuration-preview.repo \
+  https://packages.forgeopslabs.com/config/murmuration-preview.repo
+sudo install -m 0644 \
+  /tmp/murmuration-preview.repo \
+  /etc/yum.repos.d/murmuration-preview.repo
+
+sudo dnf install murmuration
+```
+
+DNF may ask you to confirm the imported key. Compare the full fingerprint
+again. The repository keeps both package and repository-metadata verification
+enabled. Check the installed identity with:
+
+```sh
+dnf info installed murmuration
+rpm -q --qf '%{NAME} %{VERSION}-%{RELEASE} %{ARCH}\n' murmuration
+```
+
+### Linux direct-download fallback
+
+From the newest preview on the
+[Releases](https://github.com/forgeopslabs/murmuration-releases/releases)
+page, download the ARM64 `.deb`, `.rpm`, or portable `.tar.zst` together with
+`SHA256SUMS`, `SHA256SUMS.asc`, and
+`murmuration-linux-release-public-key.asc`.
+
+Verify the key fingerprint first, then the signed manifest and selected file:
+
+```sh
+gpg --show-keys --with-colons murmuration-linux-release-public-key.asc \
+  | awk -F: '$1 == "fpr" { print $10; exit }'
+gpg --dearmor --yes \
+  --output /tmp/murmuration-release-verification.gpg \
+  murmuration-linux-release-public-key.asc
+gpgv --keyring /tmp/murmuration-release-verification.gpg \
+  SHA256SUMS.asc SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS
+```
+
+Install only the package for your distribution:
+
+```sh
+sudo apt-get install ./murmuration_VERSION_arm64.deb
+sudo dnf install ./murmuration-VERSION-1.aarch64.rpm
+```
+
+The `./` prefix is required for a local file. Prefer APT over `dpkg -i` so
+runtime dependencies are resolved. The portable archive can run without
+installing desktop integration:
+
+```sh
+tar --zstd -xf murmuration-VERSION-linux-aarch64.tar.zst
+./murmuration-VERSION-linux-aarch64/bin/murmur-gui
+```
+
+### macOS: recommended Homebrew installation
 
 Install the official cask from the ForgeOps Labs tap:
 
@@ -139,13 +297,17 @@ Murmuration asks only for access connected to downloading and peer networking.
 Prompts vary by macOS version, firewall configuration, and chosen destination.
 The embedded daemon may appear as `murmurd` in some system prompts.
 
-| Approval | Recommendation | Why it is used | If denied |
-| --- | --- | --- | --- |
-| Gatekeeper **Open Anyway** | Required for current preview | Allows this non-notarized build to launch | App cannot open |
-| Downloads or selected-folder access | Allow for folders you choose | Reads `.torrent` files and writes downloaded payloads | Choose another folder or enable access later |
-| Local Network | Allow for full peer discovery | Finds and connects to peers on your LAN | Local-peer discovery is unavailable |
-| Incoming network connections | Allow | Lets remote peers connect, improving reachability and seeding | Outgoing transfers may work, but peer reachability is reduced |
-| Make Murmuration the default | Optional | Opens `magnet:` links and `.torrent` files in Murmuration | Existing default app remains unchanged |
+- **Gatekeeper Open Anyway:** required for the current preview. It allows the
+  non-notarized build to launch; without it, the app cannot open.
+- **Downloads or selected-folder access:** allow for folders you choose. It is
+  used to read `.torrent` files and write payloads; otherwise choose another
+  folder or enable access later.
+- **Local Network:** allow for full peer discovery. Denying it disables
+  local-peer discovery.
+- **Incoming network connections:** allow for better peer reachability and
+  seeding. Outgoing transfers may still work if it is denied.
+- **Make Murmuration the default:** optional. It opens `magnet:` links and
+  `.torrent` files in Murmuration; otherwise the existing default remains.
 
 Murmuration does **not** require Accessibility, Full Disk Access, Screen
 Recording, Camera, Microphone, Contacts, or Location access.
@@ -165,7 +327,7 @@ Opening Murmuration automatically starts the bundled `murmurd` daemon if a
 compatible daemon is not already running. The green **Daemon** indicator means
 the GUI is connected.
 
-Default locations:
+Default locations on macOS:
 
 | Data | Location |
 | --- | --- |
@@ -173,6 +335,15 @@ Default locations:
 | Persistent state | `~/Library/Application Support/Murmuration` |
 | Logs | `~/Library/Logs/Murmuration` |
 | Local daemon endpoint | `http://127.0.0.1:6899` |
+
+Default locations on Linux:
+
+- Downloaded payloads: `~/Downloads/Murmuration`.
+- Persistent state: `$XDG_DATA_HOME/murmuration`, defaulting to
+  `~/.local/share/murmuration`.
+- Logs: `$XDG_STATE_HOME/murmuration/logs`, defaulting to
+  `~/.local/state/murmuration/logs`.
+- Local daemon endpoint: `http://127.0.0.1:6899`.
 
 The RPC endpoint is loopback-only by default. It is for local GUI, TUI, and CLI
 communication; do not expose it to another network.
@@ -252,11 +423,14 @@ remain active after the GUI closes. A value of `0` means unlimited where shown.
 
 ![Murmuration preferences](docs/images/murmuration-preferences.png)
 
-Default-handler registration depends on the macOS version and Launch Services.
-If macOS rejects a `.torrent` change, select a `.torrent` file in Finder, choose
-**Get Info > Open with**, select the preferred app, then choose **Change All…**.
-If a `magnet:` change is rejected, keep the current handler; no qualified
-manual recovery flow is currently provided.
+Installation never changes the current `magnet:` or `.torrent` defaults. On
+Linux, inspect them with `xdg-mime query default x-scheme-handler/magnet` and
+`xdg-mime query default application/x-bittorrent`; desktop settings can restore
+another handler. On macOS, registration depends on the macOS version and Launch
+Services. If macOS rejects a `.torrent` change, select a `.torrent` file in
+Finder, choose **Get Info > Open with**, select the preferred app, then choose
+**Change All…**. If a `magnet:` change is rejected, keep the current handler;
+no qualified manual recovery flow is currently provided.
 
 ## Background daemon
 
@@ -283,9 +457,10 @@ For a manual ZIP installation, use the full `murmur` path shown above.
 
 ## Terminal clients
 
-Homebrew exposes the bundled terminal UI and command-line clients in your
-command path. Both start the bundled daemon on demand when possible. Manual ZIP
-installations include the same binaries inside the app bundle.
+APT, DNF, and Homebrew expose the bundled terminal UI and command-line clients
+in your command path. Both start the bundled daemon on demand when possible.
+Manual macOS ZIP and Linux portable installations include the same binaries in
+their extracted application layout.
 
 ### Terminal UI
 
@@ -295,6 +470,9 @@ murmur-tui
 
 Manual ZIP path:
 `/Applications/Murmuration.app/Contents/Resources/bin/murmur-tui`.
+
+Linux portable path:
+`./murmuration-VERSION-linux-aarch64/bin/murmur-tui`.
 
 Use a terminal at least 72 columns by 20 rows. Press `?` inside the TUI for its
 current key guide.
@@ -313,10 +491,69 @@ murmur leakcheck
 For a manual ZIP installation, replace `murmur` with
 `/Applications/Murmuration.app/Contents/Resources/bin/murmur`.
 
+For a Linux portable archive, replace it with
+`./murmuration-VERSION-linux-aarch64/bin/murmur`.
+
 CLI `remove` keeps downloaded data. Use the GUI when you need the explicit
 keep-data/delete-data choice.
 
+## Upgrade
+
+APT:
+
+```sh
+sudo apt-get update
+sudo apt-get install --only-upgrade murmuration
+```
+
+DNF:
+
+```sh
+sudo dnf upgrade murmuration
+```
+
+Homebrew:
+
+```sh
+brew upgrade --cask forgeopslabs/tap/murmuration
+```
+
+GUI, CLI, TUI, and daemon ship as one version. A daemon already in memory can
+continue running the previous executable after the package is replaced. Use
+the GUI restart prompt or run `murmur daemon restart`; state, settings, and
+downloaded payloads remain in place.
+
 ## Troubleshooting
+
+### Linux signature or fingerprint differs
+
+Stop. Do not import an unexpected key or disable verification. Save the full
+command output and contact `hello@forgeopslabs.com`.
+
+### APT says “Unsupported file” or `dpkg` reports missing dependencies
+
+Run the installation from the package directory with a required `./` prefix.
+APT resolves dependencies that a direct `dpkg -i` invocation does not:
+
+```sh
+sudo apt-get install ./murmuration_VERSION_arm64.deb
+```
+
+### Linux GUI does not open
+
+Record the session and renderer, then run `murmur-gui` from the same graphical
+terminal and retain its output:
+
+```sh
+printf 'desktop=%s session=%s display=%s\n' \
+  "$XDG_CURRENT_DESKTOP" "$XDG_SESSION_TYPE" "$DISPLAY"
+vulkaninfo --summary
+murmur-gui
+```
+
+Current verified activation sessions are GNOME Wayland, Plasma Wayland, and
+Plasma X11. GNOME X11 and the complete hardware Vulkan matrix are not
+qualified.
 
 ### “Murmuration cannot be opened”
 
@@ -325,11 +562,15 @@ commands that disable Gatekeeper or strip quarantine metadata.
 
 ### Daemon does not connect
 
-1. Choose **Open Logs** from the startup error, or open
-   `~/Library/Logs/Murmuration` in Finder.
+1. Choose **Open Logs** from the startup error. Linux logs are under
+   `$XDG_STATE_HOME/murmuration/logs`, defaulting to
+   `~/.local/state/murmuration/logs`; macOS logs are in
+   `~/Library/Logs/Murmuration`.
 2. Check whether another Murmuration version is running.
-3. Run `murmur daemon restart`. For a manual ZIP installation, use the full
-   app-bundle path above.
+3. Run `murmur daemon restart`. Linux users can also inspect
+   `systemctl --user status murmurd.service`. The installed Linux unit is
+   static, not enabled at login, and clients use a detached fallback when a
+   usable user manager is unavailable.
 4. Reopen the app.
 
 ### Downloads do not start
@@ -343,20 +584,41 @@ commands that disable Gatekeeper or strip quarantine metadata.
 
 ### Magnet or `.torrent` links open in another app
 
-Open **Preferences**, choose **Make Murmuration the default**, and confirm. If
-macOS rejects a `.torrent` change, use Finder's **Get Info > Open with > Change
-All…** flow. If it rejects a `magnet:` change, keep the current handler.
+Open **Preferences**, choose **Make Murmuration the default**, and confirm.
+Linux users can inspect or restore both associations through desktop default-app
+settings. If macOS rejects a `.torrent` change, use Finder's **Get Info > Open
+with > Change All…** flow. If it rejects a `magnet:` change, keep the current
+handler.
 
 ### Where are logs?
 
-Open `~/Library/Logs/Murmuration` in Finder. The daemon log is
-`murmurd.log`.
+Linux logs are under `$XDG_STATE_HOME/murmuration/logs`, defaulting to
+`~/.local/state/murmuration/logs`. On macOS, open
+`~/Library/Logs/Murmuration` in Finder. The daemon log is `murmurd.log`.
 
 ## Uninstall
 
 1. Quit the GUI.
 2. If Murmuration is your default app, choose another BitTorrent app as the
    default for `.torrent` files and `magnet:` links using that app's controls.
+
+For an APT installation:
+
+```sh
+sudo apt-get remove murmuration
+```
+
+For a DNF installation:
+
+```sh
+sudo dnf remove murmuration
+```
+
+Normal Linux package removal removes package-owned application files only. It
+leaves state, settings, and downloaded payloads in place; reinstalling
+reconnects to retained state. Review the Linux paths under [First
+run](#first-run) and delete them only when you explicitly intend to erase that
+data. This guide deliberately provides no recursive deletion command.
 
 For a Homebrew installation:
 
@@ -392,6 +654,9 @@ chosen destination only when you intend to erase those files too.
 
 This public repository contains distribution artifacts, checksums, release
 notes, and the GPL Corresponding Source archive for each published version.
+Signed Linux previews additionally include the public release key, detached
+checksum signature, embedded RPM signature, SPDX SBOM, in-toto provenance, and
+a deterministic signed APT/DNF repository evidence bundle.
 
 - Applications are licensed under GPL-3.0-or-later.
 - Engine libraries are licensed under MIT OR Apache-2.0.
