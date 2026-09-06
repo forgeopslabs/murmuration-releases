@@ -101,12 +101,20 @@ Use repository-scoped trust. Never use `apt-key`, `trusted=yes`,
 `--nogpgcheck`, disabled repository metadata checks, or `curl | sh`. Stop and
 contact `hello@forgeopslabs.com` if the complete fingerprint differs.
 
-Current ARM64 evidence includes signed APT installation and a
-preview.7-to-preview.8 upgrade on Ubuntu 24.04 LTS, plus cold/warm activation
-on GNOME Wayland and Plasma Wayland/X11. Debian 13, Fedora 43/44, hardware
-Vulkan, non-systemd, transfer, uninstall, and other release-matrix coverage is
-still being completed. GNOME/X11 is parked because the available current GNOME
-ARM64 image no longer provides that session.
+The current Linux release is the signed ARM64-only
+[0.1.0-preview.10](https://github.com/forgeopslabs/murmuration-releases/releases/tag/v0.1.0-preview.10).
+It includes signed packages, APT/DNF metadata, Corresponding Source, checksums,
+SBOM, and provenance. Linux x86_64 delivery remains deferred.
+
+Earlier ARM64 evidence includes signed APT installation and a
+preview.7-to-preview.8 upgrade on Ubuntu 24.04 LTS; preview.9 signed Fedora 44
+installation and Ubuntu/Fedora uninstall/reinstall with retained data; and
+preview.9 Ubuntu GNOME Wayland activation with confirmation and daemon reuse.
+Plasma Wayland/X11 activation also has earlier evidence. These individual
+results do not establish the complete preview.10 distribution or desktop matrix.
+Remaining Debian/Fedora, hardware Vulkan, non-systemd, transfer, and other
+release-matrix coverage is still incomplete. GNOME/X11 is parked because the
+available current GNOME ARM64 image no longer provides that session.
 
 ## Install and open
 
