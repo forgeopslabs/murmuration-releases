@@ -48,7 +48,7 @@ brew install --cask forgeopslabs/tap/murmuration
 
 ## What Murmuration provides
 
-- Native desktop GUI for Apple Silicon and Intel Macs, plus Linux ARM64.
+- Native desktop GUI for Apple Silicon Macs and Linux ARM64.
 - BitTorrent v1, v2, and hybrid torrent support.
 - `.torrent` files and magnet links, with a native destination-folder picker.
 - Persistent background daemon: transfers continue after the GUI closes.
@@ -72,7 +72,7 @@ but it does not hide your network identity.
 | macOS | macOS 11 Big Sur or later |
 | Homebrew | Recommended installation method |
 | Apple Silicon | Supported; Homebrew selects the `arm64` build automatically |
-| Intel | Supported; Homebrew selects the `x86_64` build automatically |
+| Intel | New macOS releases no longer target Intel; older artifacts remain archived |
 | Linux architecture | ARM64 (`aarch64`/`arm64`) preview only |
 | Linux packages | Signed APT for Debian/Ubuntu; signed DNF for Fedora |
 | Linux sessions | Preview.10 core checks on Ubuntu/Fedora GNOME Wayland; wider matrix incomplete |
@@ -80,8 +80,8 @@ but it does not hide your network identity.
 | Storage | Space for the app, state, and selected torrent payloads |
 
 To identify your Mac, choose **Apple menu > About This Mac**. A Mac showing an
-Apple chip uses the `arm64` build. A Mac showing an Intel processor uses the
-`x86_64` build.
+Apple chip uses the `arm64` build. Preview.13 and newer macOS releases target
+Apple Silicon only.
 
 On Linux, run `uname -m` and continue only when it prints `aarch64` or
 `arm64`. Package availability does not yet mean that every compatible ARM64
@@ -252,7 +252,7 @@ Install the official cask from the ForgeOps Labs tap:
 brew install --cask forgeopslabs/tap/murmuration
 ```
 
-Homebrew automatically selects the correct Apple Silicon or Intel build,
+Homebrew installs the Apple Silicon build,
 verifies its checksum, installs **Murmuration.app**, and exposes `murmur`,
 `murmur-tui`, and `murmurd` in your command path.
 
@@ -269,9 +269,7 @@ If Homebrew is not installed, use the manual method below or follow the
 
 1. Open the [Releases](https://github.com/forgeopslabs/murmuration-releases/releases)
    page and select the newest preview.
-2. Download the ZIP matching your Mac:
-   - Apple Silicon: `murmuration-VERSION-macos-arm64.zip`
-   - Intel: `murmuration-VERSION-macos-x86_64.zip`
+2. Download the Apple Silicon ZIP: `murmuration-VERSION-macos-arm64.zip`.
 
 Each release includes `SHA256SUMS`. Download it beside the app ZIP, then
 calculate the ZIP's checksum before opening the archive:
@@ -280,8 +278,8 @@ calculate the ZIP's checksum before opening the archive:
 shasum -a 256 murmuration-VERSION-macos-arm64.zip
 ```
 
-Use the `macos-x86_64.zip` filename on an Intel Mac. Compare the printed hash
-with the matching line in `SHA256SUMS`. Continue only when they match.
+Compare the printed hash with the matching line in `SHA256SUMS`. Continue
+only when they match.
 
 Open the verified ZIP, then drag **Murmuration.app** into **Applications**.
 
